@@ -35,7 +35,7 @@ jobs:
         if: github.event_name == 'schedule' && (github.event.schedule == '0 0 1 * *' || github.event.schedule == '0 0 15 * *')
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py upcoming
@@ -44,7 +44,7 @@ jobs:
         if: github.event_name == 'schedule' && github.event.schedule == '0 1 * * 1'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py boxoffice
@@ -53,7 +53,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py ${{ github.event.inputs.mode }}

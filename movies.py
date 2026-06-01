@@ -126,6 +126,7 @@ def send_telegram_text(text):
         "disable_web_page_preview": True,
     }
     res = requests.post(url, json=payload)
+    print(f"응답: {res.status_code} {res.text}")
     res.raise_for_status()
 
 

@@ -2,11 +2,11 @@ name: 🎬 Movie Notifications
 
 on:
   schedule:
-    # 개봉 예정 영화 - 매달 1일, 15일 오전 9시 (KST = UTC+9)
-    - cron: "0 0 1 * *"   # 1일 09:00 KST
-    - cron: "0 0 15 * *"  # 15일 09:00 KST
+    # 개봉 예정 영화 - 매달 1일, 15일 오전 9시 (KST)
+    - cron: "0 0 1 * *"
+    - cron: "0 0 15 * *"
     # 박스오피스 - 매주 월요일 오전 10시 (KST)
-    - cron: "0 1 * * 1"   # 월요일 10:00 KST
+    - cron: "0 1 * * 1"
 
   workflow_dispatch:
     inputs:
@@ -37,6 +37,7 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py upcoming
 
       - name: 🏆 박스오피스 전송 (매주 월요일)
@@ -45,6 +46,7 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py boxoffice
 
       - name: 🚀 수동 실행
@@ -53,4 +55,5 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
         run: python movies.py ${{ github.event.inputs.mode }}

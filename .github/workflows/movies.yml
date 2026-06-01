@@ -1,0 +1,56 @@
+name: 🎬 Movie Notifications
+
+on:
+  schedule:
+    # 개봉 예정 영화 - 매달 1일, 15일 오전 9시 (KST)
+    - cron: "0 0 1 * *"   # 1일 09:00 KST
+    - cron: "0 0 15 * *"  # 15일 09:00 KST
+    # 박스오피스 - 매주 월요일 오전 9시 (KST)
+    - cron: "0 0 * * 1"
+
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "실행 모드 (upcoming / boxoffice)"
+        required: true
+        default: "upcoming"
+
+jobs:
+  send-movies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 🐍 Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 패키지 설치
+        run: pip install requests
+
+      - name: 🎬 개봉 예정 영화 전송 (1일, 15일)
+        if: github.event_name == 'schedule' && (github.event.schedule == '0 0 1 * *' || github.event.schedule == '0 0 15 * *')
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: python movies.py upcoming
+
+      - name: 🏆 박스오피스 전송 (매주 월요일)
+        if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * 1'
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: python movies.py boxoffice
+
+      - name: 🚀 수동 실행
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: python movies.py ${{ github.event.inputs.mode }}

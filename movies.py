@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 from urllib.parse import quote
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+MOVIE_TOKEN = os.environ["MOVIE_TOKEN"]
 MOVIE_CHAT_ID = os.environ["MOVIE_CHAT_ID"]
 TMDB_API_KEY = os.environ["TMDB_API_KEY"]
 KOBIS_API_KEY = os.environ["KOBIS_API_KEY"]
@@ -106,7 +106,7 @@ def rank_change_emoji(m):
 
 
 def send_telegram_photo(photo_url, caption):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
+    url = f"https://api.telegram.org/bot{MOVIE_TOKEN}/sendPhoto"
     payload = {
         "chat_id": MOVIE_CHAT_ID,
         "photo": photo_url,
@@ -118,7 +118,7 @@ def send_telegram_photo(photo_url, caption):
 
 
 def send_telegram_text(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{MOVIE_TOKEN}/sendMessage"
     payload = {
         "chat_id": MOVIE_CHAT_ID,
         "text": text,

@@ -13,10 +13,15 @@ def fetch_news(limit=10):
     articles = []
     feed = feedparser.parse(GOOGLE_NEWS_RSS)
     for entry in feed.entries[:limit]:
+        title = entry.title
+        source = entry.get("source", {}).get("title", "")
+        # 제목에서 " - 신문사" 형태로 붙어있는 경우 제거
+        if source and title.endswith(f" - {source}"):
+            title = title[: -(len(source) + 3)]
         articles.append({
-            "title": entry.title,
+            "title": title,
             "link": entry.link,
-            "source": entry.get("source", {}).get("title", ""),
+            "source": source,
         })
     return articles
 
@@ -30,10 +35,10 @@ def format_message(articles):
     lines = [f"{time_label} - {date_str}", ""]
 
     for i, article in enumerate(articles, 1):
-        source = f" ({article['source']})" if article["source"] else ""
-        lines.append(f'{i}. <a href="{article["link"]}">{article["title"]}</a>{source}')
+        source_part = f'\n- <a href="{article["link"]}">{article["source"]}</a>' if article["source"] else ""
+        lines.append(f'{i}. {article["title"]}{source_part}')
+        lines.append("")
 
-    lines.append("")
     lines.append("by 뉴스봇 🤖")
     return "\n".join(lines)
 

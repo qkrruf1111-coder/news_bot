@@ -1,7 +1,8 @@
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from calendar import monthrange
+from urllib.parse import quote
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
@@ -9,6 +10,10 @@ TMDB_API_KEY = os.environ["TMDB_API_KEY"]
 
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+
+
+def naver_link(title):
+    return f"https://search.naver.com/search.naver?query={quote(title + ' 영화')}"
 
 
 def get_next_month_range():
@@ -48,15 +53,17 @@ def fetch_upcoming_movies():
         genres = [g["name"] for g in d.get("genres", [])[:2]]
         runtime = d.get("runtime", 0)
         poster = d.get("poster_path", "")
+        title = d.get("title", m["title"])
 
         detailed.append({
-            "title": d.get("title", m["title"]),
+            "title": title,
             "release_date": d.get("release_date", ""),
             "genres": genres,
             "runtime": runtime,
             "director": director,
             "cast": cast,
             "poster": f"{TMDB_IMAGE_BASE}{poster}" if poster else None,
+            "naver_url": naver_link(title),
         })
 
     return detailed, year, month
@@ -112,7 +119,7 @@ def run_upcoming():
         cast = ", ".join(m["cast"]) if m["cast"] else "미정"
 
         caption = (
-            f"{i}. <b>{m['title']}</b>\n"
+            f'{i}. <a href="{m["naver_url"]}"><b>{m["title"]}</b></a>\n'
             f"📅 {date}  ⏱ {runtime}\n"
             f"🎭 {genres}\n"
             f"🎬 {m['director']}\n"
@@ -135,7 +142,9 @@ def run_boxoffice():
 
     for i, m in enumerate(movies, 1):
         rating = m.get("vote_average", 0)
-        lines.append(f"{i}위  {m['title']}  ⭐ {rating:.1f}")
+        title = m["title"]
+        link = naver_link(title)
+        lines.append(f'{i}위  <a href="{link}">{title}</a>  ⭐ {rating:.1f}')
 
     lines.append("\nby 영화봇 🎥")
     send_telegram_text("\n".join(lines))

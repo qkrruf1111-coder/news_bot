@@ -72,24 +72,38 @@ def fetch_upcoming_movies():
 
 
 def fetch_boxoffice():
-    # 지난 월요일~일요일 주간 박스오피스
     today = datetime.today()
     last_monday = today - timedelta(days=today.weekday() + 7)
     last_sunday = last_monday + timedelta(days=6)
-    start = last_monday.strftime("%Y%m%d")
     end = last_sunday.strftime("%Y%m%d")
 
     url = f"{KOBIS_BASE}/boxoffice/searchWeeklyBoxOfficeList.json"
     params = {
         "key": KOBIS_API_KEY,
         "targetDt": end,
-        "weekGb": "0",  # 0: 주간, 1: 주말
+        "weekGb": "0",
     }
     res = requests.get(url, params=params)
     res.raise_for_status()
     data = res.json()
     movies = data.get("boxOfficeResult", {}).get("weeklyBoxOfficeList", [])[:10]
     return movies, last_monday, last_sunday
+
+
+def rank_change_emoji(m):
+    rank = int(m.get("rank", 0))
+    prev_rank = int(m.get("rankOldAndNew", "OLD").replace("NEW", "0") if m.get("rankOldAndNew") == "NEW" else m.get("rankInten", 0))
+    rank_new = m.get("rankOldAndNew", "")
+
+    if rank_new == "NEW":
+        return "🆕"
+    change = int(m.get("rankInten", 0))
+    if change > 0:
+        return f"↑{change}"
+    elif change < 0:
+        return f"↓{abs(change)}"
+    else:
+        return "→"
 
 
 def send_telegram_photo(photo_url, caption):
@@ -118,8 +132,7 @@ def send_telegram_text(text):
 
 def run_upcoming():
     movies, year, month = fetch_upcoming_movies()
-    header = f"🎬 <b>{year}년 {month}월 개봉 예정 영화</b>\n\n"
-    send_telegram_text(header)
+    send_telegram_text(f"🎬 <b>{year}년 {month}월 개봉 예정 영화</b>")
 
     for i, m in enumerate(movies, 1):
         date = m["release_date"][5:].replace("-", "/") if m["release_date"] else "미정"
@@ -154,16 +167,21 @@ def run_boxoffice():
     for m in movies:
         rank = m.get("rank", "")
         title = m.get("movieNm", "")
-        audience = int(m.get("audiAcc", 0))
         audience_week = int(m.get("audiCnt", 0))
+        audience_acc = int(m.get("audiAcc", 0))
+        sales_week = int(m.get("salesAmt", 0))
+        screens = int(m.get("scrnCnt", 0))
+        change = rank_change_emoji(m)
         link = naver_link(title)
 
         lines.append(
-            f'{rank}위  <a href="{link}">{title}</a>\n'
-            f'     👥 주간 {audience_week:,}명 / 누적 {audience:,}명'
+            f'{rank}위 {change} <a href="{link}">{title}</a>\n'
+            f'     👥 주간 {audience_week:,}명 / 누적 {audience_acc:,}명\n'
+            f'     🎬 스크린 {screens:,}개\n'
+            f'     💰 주간 {sales_week:,}원\n'
         )
 
-    lines.append("\nby 영화봇 🎥")
+    lines.append("by 영화봇 🎥")
     send_telegram_text("\n".join(lines))
 
 

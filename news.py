@@ -31,10 +31,9 @@ def format_message(articles):
 
     for i, article in enumerate(articles, 1):
         source = f" ({article['source']})" if article["source"] else ""
-        lines.append(f"{i}. {article['title']}{source}")
-        lines.append(article['link'])
-        lines.append("")
+        lines.append(f'{i}. <a href="{article["link"]}">{article["title"]}</a>{source}')
 
+    lines.append("")
     lines.append("by 뉴스봇 🤖")
     return "\n".join(lines)
 
@@ -44,6 +43,7 @@ def send_telegram(message):
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": message,
+        "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
     response = requests.post(url, json=payload)

@@ -40,8 +40,6 @@ def fetch_upcoming_movies():
         "sort_by": "popularity.desc",
         "page": 1,
     }
-    if multi_movie_yn:
-        params["multiMovieYn"] = multi_movie_yn
     res = requests.get(url, params=params)
     res.raise_for_status()
     movies = res.json().get("results", [])[:10]
@@ -87,6 +85,7 @@ def fetch_boxoffice(multi_movie_yn=None):
     }
     if multi_movie_yn:
         params["multiMovieYn"] = multi_movie_yn
+
     res = requests.get(url, params=params)
     res.raise_for_status()
     data = res.json()
@@ -185,11 +184,9 @@ def format_boxoffice(movies, start, end, title_emoji, title_label):
 
 
 def run_boxoffice():
-    # 일반 박스오피스
     movies, start, end = fetch_boxoffice()
     send_telegram_text(format_boxoffice(movies, start, end, "🏆", "주간 박스오피스"))
 
-    # 예술영화 박스오피스
     art_movies, start, end = fetch_boxoffice(multi_movie_yn="Y")
     if art_movies:
         send_telegram_text(format_boxoffice(art_movies, start, end, "🎨", "예술영화 박스오피스"))
@@ -201,7 +198,6 @@ if __name__ == "__main__":
     if mode == "upcoming":
         print("🎬 개봉 예정 영화 전송 중...")
         run_upcoming()
-        # 1일 또는 15일이 월요일이면 박스오피스도 연달아 전송
         today = datetime.today()
         if today.weekday() == 0 and today.day in (1, 15):
             print("📅 오늘은 월요일이자 1일/15일 - 박스오피스도 전송!")

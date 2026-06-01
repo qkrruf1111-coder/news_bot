@@ -40,6 +40,8 @@ def fetch_upcoming_movies():
         "sort_by": "popularity.desc",
         "page": 1,
     }
+    if multi_movie_yn:
+        params["multiMovieYn"] = multi_movie_yn
     res = requests.get(url, params=params)
     res.raise_for_status()
     movies = res.json().get("results", [])[:10]
@@ -71,7 +73,7 @@ def fetch_upcoming_movies():
     return detailed, year, month
 
 
-def fetch_boxoffice(week_gb="0"):
+def fetch_boxoffice(multi_movie_yn=None):
     today = datetime.today()
     last_monday = today - timedelta(days=today.weekday() + 7)
     last_sunday = last_monday + timedelta(days=6)
@@ -81,8 +83,10 @@ def fetch_boxoffice(week_gb="0"):
     params = {
         "key": KOBIS_API_KEY,
         "targetDt": end,
-        "weekGb": week_gb,
+        "weekGb": "0",
     }
+    if multi_movie_yn:
+        params["multiMovieYn"] = multi_movie_yn
     res = requests.get(url, params=params)
     res.raise_for_status()
     data = res.json()
@@ -182,11 +186,11 @@ def format_boxoffice(movies, start, end, title_emoji, title_label):
 
 def run_boxoffice():
     # 일반 박스오피스
-    movies, start, end = fetch_boxoffice(week_gb="0")
+    movies, start, end = fetch_boxoffice()
     send_telegram_text(format_boxoffice(movies, start, end, "🏆", "주간 박스오피스"))
 
     # 예술영화 박스오피스
-    art_movies, start, end = fetch_boxoffice(week_gb="2")
+    art_movies, start, end = fetch_boxoffice(multi_movie_yn="Y")
     if art_movies:
         send_telegram_text(format_boxoffice(art_movies, start, end, "🎨", "예술영화 박스오피스"))
 

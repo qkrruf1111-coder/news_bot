@@ -71,7 +71,7 @@ def fetch_upcoming_movies():
     return detailed, year, month
 
 
-def fetch_boxoffice():
+def fetch_boxoffice(week_gb="0"):
     today = datetime.today()
     last_monday = today - timedelta(days=today.weekday() + 7)
     last_sunday = last_monday + timedelta(days=6)
@@ -81,7 +81,7 @@ def fetch_boxoffice():
     params = {
         "key": KOBIS_API_KEY,
         "targetDt": end,
-        "weekGb": "0",
+        "weekGb": week_gb,
     }
     res = requests.get(url, params=params)
     res.raise_for_status()
@@ -91,11 +91,7 @@ def fetch_boxoffice():
 
 
 def rank_change_emoji(m):
-    rank = int(m.get("rank", 0))
-    prev_rank = int(m.get("rankOldAndNew", "OLD").replace("NEW", "0") if m.get("rankOldAndNew") == "NEW" else m.get("rankInten", 0))
-    rank_new = m.get("rankOldAndNew", "")
-
-    if rank_new == "NEW":
+    if m.get("rankOldAndNew") == "NEW":
         return "🆕"
     change = int(m.get("rankInten", 0))
     if change > 0:
@@ -157,12 +153,11 @@ def run_upcoming():
     send_telegram_text("by 영화봇 🎥")
 
 
-def run_boxoffice():
-    movies, start, end = fetch_boxoffice()
+def format_boxoffice(movies, start, end, title_emoji, title_label):
     start_str = start.strftime("%m/%d")
     end_str = end.strftime("%m/%d")
 
-    lines = [f"🏆 <b>주간 박스오피스</b> ({start_str} ~ {end_str})\n"]
+    lines = [f"{title_emoji} <b>{title_label}</b> ({start_str} ~ {end_str})\n"]
 
     for m in movies:
         rank = m.get("rank", "")
@@ -182,7 +177,18 @@ def run_boxoffice():
         )
 
     lines.append("by 영화봇 🎥")
-    send_telegram_text("\n".join(lines))
+    return "\n".join(lines)
+
+
+def run_boxoffice():
+    # 일반 박스오피스
+    movies, start, end = fetch_boxoffice(week_gb="0")
+    send_telegram_text(format_boxoffice(movies, start, end, "🏆", "주간 박스오피스"))
+
+    # 예술영화 박스오피스
+    art_movies, start, end = fetch_boxoffice(week_gb="2")
+    if art_movies:
+        send_telegram_text(format_boxoffice(art_movies, start, end, "🎨", "예술영화 박스오피스"))
 
 
 if __name__ == "__main__":
@@ -191,6 +197,11 @@ if __name__ == "__main__":
     if mode == "upcoming":
         print("🎬 개봉 예정 영화 전송 중...")
         run_upcoming()
+        # 1일 또는 15일이 월요일이면 박스오피스도 연달아 전송
+        today = datetime.today()
+        if today.weekday() == 0 and today.day in (1, 15):
+            print("📅 오늘은 월요일이자 1일/15일 - 박스오피스도 전송!")
+            run_boxoffice()
     elif mode == "boxoffice":
         print("🏆 박스오피스 전송 중...")
         run_boxoffice()

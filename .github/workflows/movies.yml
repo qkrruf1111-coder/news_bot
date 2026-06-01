@@ -34,7 +34,7 @@ jobs:
       - name: 🎬 개봉 예정 영화 전송 (1일, 15일)
         if: github.event_name == 'schedule' && (github.event.schedule == '0 0 1 * *' || github.event.schedule == '0 0 15 * *')
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          MOVIE_TOKEN: ${{ secrets.MOVIE_TOKEN }}
           MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
@@ -43,7 +43,7 @@ jobs:
       - name: 🏆 박스오피스 전송 (매주 월요일)
         if: github.event_name == 'schedule' && github.event.schedule == '0 1 * * 1'
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          MOVIE_TOKEN: ${{ secrets.MOVIE_TOKEN }}
           MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
@@ -52,7 +52,7 @@ jobs:
       - name: 🚀 수동 실행
         if: github.event_name == 'workflow_dispatch'
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          MOVIE_TOKEN: ${{ secrets.MOVIE_TOKEN }}
           MOVIE_CHAT_ID: ${{ secrets.MOVIE_CHAT_ID }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}

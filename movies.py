@@ -1,15 +1,17 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from calendar import monthrange
 from urllib.parse import quote
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 TMDB_API_KEY = os.environ["TMDB_API_KEY"]
+KOBIS_API_KEY = os.environ["KOBIS_API_KEY"]
 
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+KOBIS_BASE = "http://www.kobis.or.kr/kobisopenapi/webservice/rest"
 
 
 def naver_link(title):
@@ -70,17 +72,24 @@ def fetch_upcoming_movies():
 
 
 def fetch_boxoffice():
-    url = f"{TMDB_BASE}/movie/now_playing"
+    # 지난 월요일~일요일 주간 박스오피스
+    today = datetime.today()
+    last_monday = today - timedelta(days=today.weekday() + 7)
+    last_sunday = last_monday + timedelta(days=6)
+    start = last_monday.strftime("%Y%m%d")
+    end = last_sunday.strftime("%Y%m%d")
+
+    url = f"{KOBIS_BASE}/boxoffice/searchWeeklyBoxOfficeList.json"
     params = {
-        "api_key": TMDB_API_KEY,
-        "language": "ko-KR",
-        "region": "KR",
-        "page": 1,
+        "key": KOBIS_API_KEY,
+        "targetDt": end,
+        "weekGb": "0",  # 0: 주간, 1: 주말
     }
     res = requests.get(url, params=params)
     res.raise_for_status()
-    movies = res.json().get("results", [])[:10]
-    return sorted(movies, key=lambda x: x.get("popularity", 0), reverse=True)
+    data = res.json()
+    movies = data.get("boxOfficeResult", {}).get("weeklyBoxOfficeList", [])[:10]
+    return movies, last_monday, last_sunday
 
 
 def send_telegram_photo(photo_url, caption):
@@ -136,15 +145,23 @@ def run_upcoming():
 
 
 def run_boxoffice():
-    movies = fetch_boxoffice()
-    today = datetime.today().strftime("%Y년 %m월 %d일")
-    lines = [f"🏆 <b>이번 주 박스오피스</b> ({today})\n"]
+    movies, start, end = fetch_boxoffice()
+    start_str = start.strftime("%m/%d")
+    end_str = end.strftime("%m/%d")
 
-    for i, m in enumerate(movies, 1):
-        rating = m.get("vote_average", 0)
-        title = m["title"]
+    lines = [f"🏆 <b>주간 박스오피스</b> ({start_str} ~ {end_str})\n"]
+
+    for m in movies:
+        rank = m.get("rank", "")
+        title = m.get("movieNm", "")
+        audience = int(m.get("audiAcc", 0))
+        audience_week = int(m.get("audiCnt", 0))
         link = naver_link(title)
-        lines.append(f'{i}위  <a href="{link}">{title}</a>  ⭐ {rating:.1f}')
+
+        lines.append(
+            f'{rank}위  <a href="{link}">{title}</a>\n'
+            f'     👥 주간 {audience_week:,}명 / 누적 {audience:,}명'
+        )
 
     lines.append("\nby 영화봇 🎥")
     send_telegram_text("\n".join(lines))
